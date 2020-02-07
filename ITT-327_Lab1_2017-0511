@@ -1,0 +1,202 @@
+/* USER CODE BEGIN Header */
+/**
+ ******************************************************************************
+ * @file           : main.c
+ * @brief          : Main program body
+ ******************************************************************************
+ * @attention
+ *
+ * <h2><center>&copy; Copyright (c) 2020 STMicroelectronics.
+ * All rights reserved.</center></h2>
+ *
+ * This software component is licensed by ST under BSD 3-Clause license,
+ * the "License"; You may not use this file except in compliance with the
+ * License. You may obtain a copy of the License at:
+ *                        opensource.org/licenses/BSD-3-Clause
+ *
+ ******************************************************************************
+ */
+/* USER CODE END Header */
+
+/* Includes ------------------------------------------------------------------*/
+#include "main.h"
+void SystemClock_Config(void);
+
+int toggle_blue(){//funcion para cambiar de estado el led azul, si esta encendido, lo apaga y devuelve un 0. Si esta apagado, lo enciende y devuelve un 1.
+	int value=0;
+	if((GPIOB->ODR & (1<<7))==0){
+		GPIOB->ODR |= (1<<7);
+		value=1;
+	}else{
+		GPIOB->ODR &=(~(1<<7));
+	}
+	return value;
+}
+
+int toggle_red(){//funcion para cambiar de estado el led rojo, si esta encendido, lo apaga y devuelve un 0. Si esta apagado, lo enciende y devuelve un 1.
+	int value=0;
+	if((GPIOB->ODR & (1<<14))==0){
+		GPIOB->ODR |= (1<<14);
+		value=1;
+	}else{
+		GPIOB->ODR &=(~(1<<14));
+	}
+	return value;
+}
+int push_button_pressed(){//funcion para saber si el boton esta presionado, si no esta presionado, devuelve un 0. Si esta presionado, devuelve un 1.
+	int value=0;
+	if((GPIOC->IDR & (1<<13))!=0){
+		value=1;
+	}
+	return value;
+}
+ counting(int *count, int max){//funcion para que se realicen procesos cuando el contador llegue a su valor deseado. Se le pasa un puntero de la variable contador para poder modificarla, cada vez que es llamada, aumenta el valor de la variable y al llegar al valor deseado, la hace 0 y devuelve un 1.
+	int value=0;
+	if(*count<max){
+		(*count)+=1;
+	}else{
+		*count=0;
+		value=1;
+	}
+	return value;
+}
+int main(void)
+{
+	HAL_Init();
+	//GPIOB y C encendidos
+	RCC->AHB1ENR |= ((1<<1) | (1<<2));
+	//Configuracion de los led
+	//Modo de los LED, salida
+	//Azul
+	GPIOB->MODER |= (1<<14);
+	GPIOB->MODER &= (~(1<<15));
+	//Rojo
+	GPIOB->MODER |= (1<<28);
+	GPIOB->MODER &= (~(1<<29));
+	//Tipo, PushPull
+	GPIOB->OTYPER &= (~(1<<7));
+	GPIOB->OTYPER &= (~(1<<14));
+	//Velocidad, lenta
+	GPIOB->OSPEEDR &= (~(3<<7));
+	GPIOB->OSPEEDR &= (~(3<<14));
+	//Configuracion del boton
+	GPIOC->MODER &= (~(3<<13));//Entrada
+	GPIOB->OSPEEDR &= (~(3<<13));//Lento
+	GPIOB->PUPDR &= (~(3<<13));//No pullup ni pulldown
+
+	int count=0;//contador para utilizar la funcion de contar y conseguir que el led azul y rojo trabajen juntos
+	int help=1;//variable para ayuda, sera explicada adelante
+
+	while (1)
+	{
+		if(push_button_pressed()){
+
+			if(((GPIOB->ODR & (1<<7))==0)&&(help)){//al presionar el boton, asegura que el led azul y el rojo parpadeen de manera alterna
+				GPIOB->ODR |= (1<<14);             //Si el led azul está apagado y es la primera vez que se presiona en esa iteracion (por la variable help),
+			}else{                                 //enciende el rojo, y de lo contrario, apaga el rojo
+				GPIOB->ODR &=(~(1<<14));
+			}
+			if(toggle_blue()){					   //Se llama a la funcion de cambio de estado del azul, y dependiendo del estado, se hace delay de 0.75s o 0.25
+				HAL_Delay(750);
+
+			}else{
+				toggle_red();					   //Hace que si el azul esta apagado, el rojo este encendido y viceversa
+				HAL_Delay(250);
+			}
+			help=0;                                //Se pone a help en 0 para que no se vuelva a realizar la accion de encender el rojo al inicio mientras este presionado el boton
+		}else{
+			if(counting(&count, 8)){			   //Bloque de codigo para cuando no se presiona el boton. El led rojo solo se va a cambiar si se llega al numero del conteo (8)
+				toggle_red();			  	 	   //Si no se ha llegado al conteo, el azul realizara su proceso de siempre, 0.75 on y 0.25 of
+			}else{
+				if(toggle_blue()){
+					HAL_Delay(750);
+				}else{
+					HAL_Delay(250);
+				}
+
+			}
+			help=1;                                //se pone help en 1 para que al presionar el boton otra vez, funcione correctamente el bloque de codigo del boton presionado
+		}
+	}
+}
+
+
+void SystemClock_Config(void)
+{
+	RCC_OscInitTypeDef RCC_OscInitStruct = {0};
+	RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
+
+	/** Configure the main internal regulator output voltage
+	 */
+	__HAL_RCC_PWR_CLK_ENABLE();
+	__HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
+	/** Initializes the CPU, AHB and APB busses clocks
+	 */
+	RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
+	RCC_OscInitStruct.HSIState = RCC_HSI_ON;
+	RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
+	RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
+	RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
+	RCC_OscInitStruct.PLL.PLLM = 8;
+	RCC_OscInitStruct.PLL.PLLN = 216;
+	RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
+	RCC_OscInitStruct.PLL.PLLQ = 2;
+	if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
+	{
+		Error_Handler();
+	}
+	/** Activate the Over-Drive mode
+	 */
+	if (HAL_PWREx_EnableOverDrive() != HAL_OK)
+	{
+		Error_Handler();
+	}
+	/** Initializes the CPU, AHB and APB busses clocks
+	 */
+	RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
+			|RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
+	RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
+	RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
+	RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV4;
+	RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV2;
+
+	if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_7) != HAL_OK)
+	{
+		Error_Handler();
+	}
+}
+
+/* USER CODE BEGIN 4 */
+
+/* USER CODE END 4 */
+
+/**
+ * @brief  This function is executed in case of error occurrence.
+ * @retval None
+ */
+void Error_Handler(void)
+{
+	/* USER CODE BEGIN Error_Handler_Debug */
+	/* User can add his own implementation to report the HAL error return state */
+
+	/* USER CODE END Error_Handler_Debug */
+}
+
+#ifdef  USE_FULL_ASSERT
+/**
+ * @brief  Reports the name of the source file and the source line number
+ *         where the assert_param error has occurred.
+ * @param  file: pointer to the source file name
+ * @param  line: assert_param error line source number
+ * @retval None
+ */
+void assert_failed(uint8_t *file, uint32_t line)
+{
+	/* USER CODE BEGIN 6 */
+	/* User can add his own implementation to report the file name and line number,
+     tex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
+	/* USER CODE END 6 */
+}
+#endif /* USE_FULL_ASSERT */
+
+/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
