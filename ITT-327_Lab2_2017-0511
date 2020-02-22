@@ -1,0 +1,394 @@
+void GPIO_Config(){//funcion en la que se realizan todas las configuraciones de los GPIOs previas a su utilizacion
+	//GPIOB, C, E y F encendidos
+	RCC->AHB1ENR |= ((1<<1) | (1<<4) | (1<<5) | (1<<2));
+
+	//Leds del micro
+	//Azul
+	GPIOB->MODER |= (1<<14);
+	GPIOB->MODER &= (~(1<<15));
+	//Rojo
+	GPIOB->MODER |= (1<<28);
+	GPIOB->MODER &= (~(1<<29));
+	//Verde
+	GPIOB->MODER |= (1<<0);
+	GPIOB->MODER &= (~(1<<1));
+
+	//Tipo, PushPull
+	GPIOB->OTYPER &= (~(1<<0));
+	GPIOB->OTYPER &= (~(1<<7));
+	GPIOB->OTYPER &= (~(1<<14));
+
+	//Velocidad, lenta
+	GPIOB->OSPEEDR &= (~(3<<0));
+	GPIOB->OSPEEDR &= (~(3<<7));
+	GPIOB->OSPEEDR &= (~(3<<14));
+
+	//Configuracion de los GPIO para leds esternos
+	//Modo de los GPIO, salida
+	//0 al 5. PE2,PE4,PE5,PE6,PE3,PF8
+	GPIOE->MODER |= (1<<4);
+	GPIOE->MODER &= (~(1<<5));
+
+	GPIOE->MODER |= (1<<8);
+	GPIOE->MODER &= (~(1<<9));
+
+	GPIOE->MODER |= (1<<10);
+	GPIOE->MODER &= (~(1<<11));
+
+	GPIOE->MODER |= (1<<12);
+	GPIOE->MODER &= (~(1<<13));
+
+	GPIOE->MODER |= (1<<6);
+	GPIOE->MODER &= (~(1<<7));
+
+	GPIOF->MODER |= (1<<16);
+	GPIOF->MODER &= (~(1<<17));
+
+	//Configuracion tipo, Push-Pull
+	GPIOE->OTYPER &= (~(1<<2));
+	GPIOE->OTYPER &= (~(1<<4));
+	GPIOE->OTYPER &= (~(1<<5));
+	GPIOE->OTYPER &= (~(1<<6));
+	GPIOE->OTYPER &= (~(1<<3));
+	GPIOF->OTYPER &= (~(1<<8));
+
+	//Configuracion velocidad, medium
+	GPIOE->OSPEEDR |= (1<<4);
+	GPIOE->OSPEEDR &= (~(1<<5));
+
+	GPIOE->OSPEEDR |= (1<<8);
+	GPIOE->OSPEEDR &= (~(1<<9));
+
+	GPIOE->OSPEEDR |= (1<<10);
+	GPIOE->OSPEEDR &= (~(1<<11));
+
+	GPIOE->OSPEEDR |= (1<<12);
+	GPIOE->OSPEEDR &= (~(1<<13));
+
+	GPIOE->OSPEEDR |= (1<<6);
+	GPIOE->OSPEEDR &= (~(1<<7));
+
+	GPIOF->OSPEEDR |= (1<<16);
+	GPIOF->OSPEEDR &= (~(1<<17));
+
+	//Configuracion de botones
+	GPIOC->MODER &= (~(3<<13));//Entrada
+	GPIOC->OSPEEDR &= (~(3<<13));//Lento
+	GPIOC->PUPDR &= (~(3<<13));//No pullup ni pulldown
+
+	GPIOC->MODER &= (~(3<<8));//Entrada
+	GPIOC->OSPEEDR &= (~(3<<8));//Lento
+	GPIOC->PUPDR &= (~(3<<8));//No pullup ni pulldown
+
+	GPIOC->MODER &= (~(3<<9));//Entrada
+	GPIOC->OSPEEDR &= (~(3<<9));//Lento
+	GPIOC->PUPDR &= (~(3<<9));//No pullup ni pulldown
+
+
+}
+
+int button_pressed(){//Funcion para leer la entrada de un puerto para un boton. Devuelve un 1 si el boton se encuentra presionado y un 0 si no
+	int value=0;
+	if((GPIOC->IDR & (1<<13))!=0){
+		value=1;
+	}
+	return value;
+}
+int push_button_up(){
+	int value=0;
+	if((GPIOC->IDR & (1<<8))!=0){
+		value=1;
+	}
+	return value;
+}
+int push_button_down(){
+	int value=0;
+	if((GPIOC->IDR & (1<<9))!=0){
+		value=1;
+	}
+	return value;
+}
+int toggle_LED0(){//Funcion que cambia el estado de un led. Devuelve 0 si se apago y 1 si se encendio
+	int value=0;
+	if((GPIOE->ODR & (1<<2))==0){
+		GPIOE->ODR |= (1<<2);
+		value=1;
+	}else{
+		GPIOE->ODR &=(~(1<<2));
+	}
+	return value;
+}
+int counting(int *count, int max, int min, int down_up,int reset){//Funcion para realizar un conteo en una variable
+	int value=0;
+	if(down_up){//Este parametro decide si el conteo sera descendente (0) o ascendente (1)
+		if(*count<max){
+			(*count)+=1;
+		}else{
+			if(reset){//Este parametro decide si una vez llegado al valor maximo (o minimo en la evaluacion de abajo), el contador se resetea en 0 o se mantiene en el maximo/minimo
+				*count=0;
+			}
+			else{
+				*count=max;
+			}
+
+			value=1;
+		}
+	}
+	else{
+		if(*count>min){
+			(*count)-=1;
+		}else{
+			if(reset){
+				*count=0;
+			}
+			else{
+				*count=min;
+			}
+
+			value=1;
+		}
+	}
+
+	return value; //la funcion devuelve 0 si no se llego al valor maximo/minimo dependiendo de down_up, y devuelve 1 cuando llegue al valor
+}
+
+
+
+
+void turn_leds1(int count,int leds[]){//funcion para la primera parte de la practica
+	//Se utiliza un arreglo llamado leds en el cual cada posicion hace referencia a un led en particular
+	//Solo uno de los leds se encontrara encendido y sera el que corresponda con el valor de count
+	//Para que el led 0 encienda, count debe ser 0 y asi con todos
+	leds[0]=(count==0);
+	leds[1]=(count==1);
+	leds[2]=(count==2);
+	leds[3]=(count==3);
+	leds[4]=(count==4);
+
+	//este conjunto de if se encarga de encender y apagar los GPIOs correspondientes dependiendo de la evaluacion previa 
+	if(leds[0]){
+		GPIOF->ODR |= (1<<8);
+	}else{
+		GPIOF->ODR &= ~(1<<8);
+	}
+	if(leds[1]){
+		GPIOE->ODR |= (1<<3);
+	}else{
+		GPIOE->ODR &= ~(1<<3);
+	}
+	if(leds[2]){
+		GPIOE->ODR |= (1<<6);
+	}else{
+		GPIOE->ODR &= ~(1<<6);
+	}
+	if(leds[3]){
+		GPIOE->ODR |= (1<<5);
+	}else{
+		GPIOE->ODR &= ~(1<<5);
+	}
+	if(leds[4]){
+		GPIOE->ODR |= (1<<4);
+	}else{
+		GPIOE->ODR &= ~(1<<4);
+	}
+}
+
+void turn_leds2(int count,int leds[]){//funcion para la segunda parte de la practica
+	//El funcionamiento del conjunto de ifs es el mismo que el anterior, la evaluacion con el arreglo leds cambia
+	//Solo encenderan los leds correspondientes cuando el valor del contador sea mayor que ellos
+	//Para que encienda el led 0, el valor de contador debe ser mayor que 0
+	leds[0]=(count>0);
+	leds[1]=(count>1);
+	leds[2]=(count>2);
+	leds[3]=(count>3);
+	leds[4]=(count>4);
+
+	if(leds[0]){
+		GPIOF->ODR |= (1<<8);
+	}else{
+		GPIOF->ODR &= ~(1<<8);
+	}
+	if(leds[1]){
+		GPIOE->ODR |= (1<<3);
+	}else{
+		GPIOE->ODR &= ~(1<<3);
+	}
+	if(leds[2]){
+		GPIOE->ODR |= (1<<6);
+	}else{
+		GPIOE->ODR &= ~(1<<6);
+	}
+	if(leds[3]){
+		GPIOE->ODR |= (1<<5);
+	}else{
+		GPIOE->ODR &= ~(1<<5);
+	}
+	if(leds[4]){
+		GPIOE->ODR |= (1<<4);
+	}else{
+		GPIOE->ODR &= ~(1<<4);
+	}
+}
+
+void turn_leds3(int count,int leds[]){//funcion para la tercera parte de la practica
+	//El funcionamiento del conjunto de ifs es el mismo que el anterior, la evaluacion con el arreglo leds cambia
+	//Solo encenderan los leds correspondientes cuando el valor del contador en binario posea un bit encendido en la misma posicion en la que se encuentra el led
+	//Se debe mencionar que el orden de los leds se encuentra contrario al de las anteriores funciones. El led 0 es 4, el 1 es el 3
+	//Para que encienda el led 0, el valor de contador debe ser tal que en binario el bit 0 se encuentre encendido
+	leds[4]=(count & (1));
+	leds[3]=(count & (1<<1));
+	leds[2]=(count & (1<<2));
+	leds[1]=(count & (1<<3));
+	leds[0]=(count & (1<<4));
+
+	if(leds[0]){
+		GPIOF->ODR |= (1<<8);
+	}else{
+		GPIOF->ODR &= ~(1<<8);
+	}
+	if(leds[1]){
+		GPIOE->ODR |= (1<<3);
+	}else{
+		GPIOE->ODR &= ~(1<<3);
+	}
+	if(leds[2]){
+		GPIOE->ODR |= (1<<6);
+	}else{
+		GPIOE->ODR &= ~(1<<6);
+	}
+	if(leds[3]){
+		GPIOE->ODR |= (1<<5);
+	}else{
+		GPIOE->ODR &= ~(1<<5);
+	}
+	if(leds[4]){
+		GPIOE->ODR |= (1<<4);
+	}else{
+		GPIOE->ODR &= ~(1<<4);
+	}
+}
+
+void mode(int count,int leds[],int counti){//Funcion para que dependiendo de un contador, el programa utilize la primera, segunda o tercera parte
+
+	switch (count) {//un contador que va de 0 a 2
+	case 0://Si count es 0, se realiza la primera parte y se enciende el led verde del nucleo 
+		GPIOB->ODR &= (1<<0);
+		GPIOB->ODR |= (1<<0);
+		turn_leds1(counti, leds);
+		break;
+	case 1://Si count es 1, se realiza la segunda parte y se enciende el led azul del nucleo 
+		GPIOB->ODR &= (1<<7);
+		GPIOB->ODR |= (1<<7);
+		turn_leds2(counti, leds);
+		break;
+	case 2://Si count es 2, se realiza la tercera parte y se enciende el led rojo del nucleo 
+		GPIOB->ODR &= (1<<14);
+		GPIOB->ODR |= (1<<14);
+		turn_leds3(counti, leds);
+		break;
+	}
+
+}
+
+void debouncing(int *read, int *state, int *last, int delay, int *signal, int *last_time){//Funcion para realizar el debouncing
+
+	if(*read!=*last){//compara el valor leido mas reciente con el ultimo estado de la entrada, si son distintos significa que hubo un cambio y se debe tomar un tiempo para el debouncing
+		*last_time=HAL_GetTick();
+	}
+	if((HAL_GetTick()-*last_time)>delay){//si el tiempo transcurrido es mayor que el delay, significa que el valor leido lleva suficiente tiempo
+
+		if(*read!=*state){
+
+			*state=*read;//si el valor leido es distinto del estado actual, los hace iguales y si estado es distinto de 0, la señal se enciende
+			if(*state!=0){
+				*signal=1;
+			}
+		}
+	}
+	*last=*read;//el estado leido se convierte en el ultimo estado
+}
+
+void choose_count_up(int count,int *count2){//funcion que decide el maximo al que se debe llevar el contador que enciende los leds
+	switch (count) {
+	case 0:
+		counting(count2, 4, 0, 1, 0);//si count es 0, se cuenta hasta 4 por la primera parte
+		break;
+	case 1:
+		counting(count2, 5, 0, 1, 0);//si count es 1, se cuenta hasta 5 por la segunda parte
+		break;
+	case 2:
+		counting(count2, 31, 0, 1, 0);//si count es 2, se cuenta hasta 31 por la tercera parte
+		break;
+	}
+
+}
+
+
+
+
+
+
+
+int main(void)
+{
+
+	GPIO_Config();// se inicializan y configuran todos los GPIOs a utilizar
+
+	HAL_Init();
+	SystemClock_Config();
+
+	int count1=0;
+	int count2=0;
+	int count3=0;
+	int leds[5];
+	int read_up=0;
+	int read_down=0;
+	int read_pressed=0;
+	int state_up=0;
+	int state_down=0;
+	int state_pressed=0;
+	int last_up=0;
+	int last_down=0;
+	int last_pressed=0;
+	long int last_debounce_time_up=0;
+	long int last_debounce_time_down=0;
+	long int last_debounce_time_pressed=0;
+	int delay=50;
+	int signal_up=0;
+	int signal_down=0;
+	int signal_pressed=0;
+
+	while (1)
+	{
+
+		if(counting(&count1, 50, 0, 1, 1)){//contador que garantiza que uno de los leds permanezca encendido 0.5s y apagado 0.5s
+			toggle_LED0();
+		}
+		HAL_Delay(10);
+
+		read_up=push_button_up();//se lee el estado del boton y eso se envia a la funcion de debouncing, asi como otros parametros
+		debouncing(&read_up, &state_up, &last_up, delay, &signal_up, &last_debounce_time_up);
+		if(signal_up){//Luego del debouncing, si se presiona el boton, se utiliza la funcion choose count para determinar que tipo de contador se usara en funcion de la variable count 3
+			choose_count_up(count3,&count2);
+			signal_up=0;//se hace que signal sea 0, garantizando que solo se produzca el aumento una vez y que 
+		}
+		
+		//el funcionamiento es practicamente el mismo que el de arriba con la diferencia que es para el boton de cuenta hacia abajo
+		read_down=push_button_down();
+		debouncing(&read_down, &state_down, &last_down, delay, &signal_down,  &last_debounce_time_down);
+		if(signal_down){
+			counting(&count2, 4, 0, 0, 0);//se usa siempre el mismo contador debido a que el minimo siempre es 0
+			signal_down=0;
+		}
+		//funcionamiento similar
+		read_pressed=button_pressed();
+		debouncing(&read_pressed, &state_pressed, &last_pressed, delay, &signal_pressed, &last_debounce_time_pressed);
+		if(signal_pressed){
+			counting(&count3, 2, 0, 1, 1);
+			count2=0;//hacemos que count2 sea 0 ya que este boton sirve para aumentar el contador que varia los modos, al variar el modo, este inicia en 0
+			signal_pressed=0;
+		}
+
+		mode(count3,leds,count2);//se llama a la funcion que decide el modo y enciende los leds en funcion de cont3
+	}
+}
