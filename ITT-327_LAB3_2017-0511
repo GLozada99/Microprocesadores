@@ -1,0 +1,469 @@
+/* USER CODE BEGIN Header */
+/**
+ ******************************************************************************
+ * @file           : main.c
+ * @brief          : Main program body
+ ******************************************************************************
+ * @attention
+ *
+ * <h2><center>&copy; Copyright (c) 2020 STMicroelectronics.
+ * All rights reserved.</center></h2>
+ *
+ * This software component is licensed by ST under BSD 3-Clause license,
+ * the "License"; You may not use this file except in compliance with the
+ * License. You may obtain a copy of the License at:
+ *                        opensource.org/licenses/BSD-3-Clause
+ *
+ ******************************************************************************
+ */
+/* USER CODE END Header */
+
+/* Includes ------------------------------------------------------------------*/
+#include "main.h"
+#include <stdio.h>
+#include <stdlib.h>
+
+/* Private includes ----------------------------------------------------------*/
+/* USER CODE BEGIN Includes */
+
+/* USER CODE END Includes */
+
+/* Private typedef -----------------------------------------------------------*/
+/* USER CODE BEGIN PTD */
+
+/* USER CODE END PTD */
+
+/* Private define ------------------------------------------------------------*/
+/* USER CODE BEGIN PD */
+/* USER CODE END PD */
+
+/* Private macro -------------------------------------------------------------*/
+/* USER CODE BEGIN PM */
+
+/* USER CODE END PM */
+
+/* Private variables ---------------------------------------------------------*/
+
+/* USER CODE BEGIN PV */
+
+/* USER CODE END PV */
+
+/* Private function prototypes -----------------------------------------------*/
+void SystemClock_Config(void);
+
+void GPIO_Config(){//Configuracion de todos los GPIOs necesarios para las practicas
+	//GPIOC, D, E y F encendidos
+	RCC->AHB1ENR |= ((1<<2) | (1<<3) | (1<<4) | (1<<5));
+	//Modo de los GPIO, salida
+	//Trans 1 al 4 y led de estimulo.
+	GPIOD->MODER |= (1<<6);
+	GPIOD->MODER &= (~(1<<7));
+
+	GPIOD->MODER |= (1<<8);
+	GPIOD->MODER &= (~(1<<9));
+
+	GPIOD->MODER |= (1<<10);
+	GPIOD->MODER &= (~(1<<11));
+
+	GPIOD->MODER |= (1<<12);
+	GPIOD->MODER &= (~(1<<13));
+
+	GPIOD->MODER |= (1<<14);
+	GPIOD->MODER &= (~(1<<15));
+
+	//Configuracion tipo, Push-Pull
+	GPIOD->OTYPER &= (~(1<<3));
+	GPIOD->OTYPER &= (~(1<<4));
+	GPIOD->OTYPER &= (~(1<<5));
+	GPIOD->OTYPER &= (~(1<<6));
+	GPIOD->OTYPER &= (~(1<<7));
+
+	//Configuracion velocidad, medium
+	GPIOD->OSPEEDR |= (1<<6);
+	GPIOD->OSPEEDR &= (~(1<<7));
+
+	GPIOD->OSPEEDR |= (1<<8);
+	GPIOD->OSPEEDR &= (~(1<<9));
+
+	GPIOD->OSPEEDR |= (1<<10);
+	GPIOD->OSPEEDR &= (~(1<<11));
+
+	GPIOD->OSPEEDR |= (1<<12);
+	GPIOD->OSPEEDR &= (~(1<<13));
+
+	GPIOD->OSPEEDR |= (1<<14);
+	GPIOD->OSPEEDR &= (~(1<<15));
+
+	//salidas A-H
+	//Modo de los GPIO, salida
+	//A-H. PE2,PE4,PE5,PE6,PE3,PF8,PF7,PF9
+	GPIOE->MODER |= (1<<4);//H
+	GPIOE->MODER &= (~(1<<5));
+
+	GPIOE->MODER |= (1<<8);//G
+	GPIOE->MODER &= (~(1<<9));
+
+	GPIOE->MODER |= (1<<10);//F
+	GPIOE->MODER &= (~(1<<11));
+
+	GPIOE->MODER |= (1<<12);//E
+	GPIOE->MODER &= (~(1<<13));
+
+	GPIOE->MODER |= (1<<6);//D
+	GPIOE->MODER &= (~(1<<7));
+
+	GPIOF->MODER |= (1<<16);//C
+	GPIOF->MODER &= (~(1<<17));
+
+	GPIOF->MODER |= (1<<14);//B
+	GPIOF->MODER &= (~(1<<15));
+
+	GPIOF->MODER |= (1<<18);//A
+	GPIOF->MODER &= (~(1<<19));
+
+	//Configuracion tipo, Push-Pull
+	GPIOE->OTYPER &= (~(1<<2));
+	GPIOE->OTYPER &= (~(1<<4));
+	GPIOE->OTYPER &= (~(1<<5));
+	GPIOE->OTYPER &= (~(1<<6));
+	GPIOE->OTYPER &= (~(1<<3));
+	GPIOF->OTYPER &= (~(1<<8));
+	GPIOF->OTYPER &= (~(1<<7));
+	GPIOF->OTYPER &= (~(1<<9));
+
+	//Configuracion velocidad, medium
+	GPIOE->OSPEEDR |= (1<<4);
+	GPIOE->OSPEEDR &= (~(1<<5));
+
+	GPIOE->OSPEEDR |= (1<<8);
+	GPIOE->OSPEEDR &= (~(1<<9));
+
+	GPIOE->OSPEEDR |= (1<<10);
+	GPIOE->OSPEEDR &= (~(1<<11));
+
+	GPIOE->OSPEEDR |= (1<<12);
+	GPIOE->OSPEEDR &= (~(1<<13));
+
+	GPIOE->OSPEEDR |= (1<<6);
+	GPIOE->OSPEEDR &= (~(1<<7));
+
+	GPIOF->OSPEEDR |= (1<<16);
+	GPIOF->OSPEEDR &= (~(1<<17));
+
+	GPIOF->OSPEEDR |= (1<<14);
+	GPIOF->OSPEEDR &= (~(1<<15));
+
+	GPIOF->OSPEEDR |= (1<<18);
+	GPIOF->OSPEEDR &= (~(1<<19));
+
+	//botones
+	GPIOC->MODER &= (~(3<<8));//Entrada
+	GPIOC->OSPEEDR &= (~(3<<8));//Lento
+	GPIOC->PUPDR &= (~(3<<8));//No pullup ni pulldown
+
+	GPIOC->MODER &= (~(3<<9));//Entrada
+	GPIOC->OSPEEDR &= (~(3<<9));//Lento
+	GPIOC->PUPDR &= (~(3<<9));//No pullup ni pulldown
+
+	GPIOC->MODER &= (~(3<<10));//Entrada
+	GPIOC->OSPEEDR &= (~(3<<10));//Lento
+	GPIOC->PUPDR &= (~(3<<10));//No pullup ni pulldown
+}
+
+void tim6_setup(){//Configuracion del temporizador 6 para realizar interrupciones
+	RCC->APB1ENR |= (1<<4);//Habilitador del temporizador
+	TIM6->PSC = 10800-1;//Preescalador. Divide 216/2 entre 10800 = 10000Hz
+	//TIM6->ARR = 10000-1;
+	TIM6->ARR = 50-1;//Registro de auto recarga. Cuenta 50 veces antes de realizar interrupcion. Interrupciones 200Hz, cada 5ms
+	TIM6->DIER |= 1;//Habilita las interrupciones
+	TIM6->CR1 |= 1;//Inicia el conteo
+}
+
+
+
+//Las siguientes 3 funciones detectan si se presiono el boton especificado, si fue asi, devuelve 1. Si no, devuelve 0
+int button_clear(){
+	int value=0;
+	if((GPIOC->IDR & (1<<8))!=0){
+		value=1;
+	}
+	return value;
+}
+int button_start(){
+	int value=0;
+	if((GPIOC->IDR & (1<<9))!=0){
+		value=1;
+	}
+	return value;
+}
+int button_stop(){
+	int value=0;
+	if((GPIOC->IDR & (1<<10))!=0){
+		value=1;
+	}
+	return value;
+}
+
+int cont1[4]={15,16,13,17};//Valor inicial de los digitos. Muestra en la pantalla REDY
+int letras[8];//Arreglo de 8 elementos que simula los 8 segmentos del vizualizador
+
+void TIM6_DAC_IRQHandler(void){//Funcion que se ejecuta cuando se genera una interrupcion en el TIM6
+	static int trans=0;//Variable estatica que se utiliza para que en cada interrupcion se refresque uno de los digitos del visualizador
+	if(TIM6->SR & 1){//Debido a que la interrupcion puede darse por el TIM6 o por el DAC, este if es para que se realize solo la del TIM6
+
+			//Segmentos solo encenderan o apagaran segun el valor que se quiera escribir
+		    //Ej: Si se quiere poner el numero 1, deben apagar todos y solo encender 1 y 2, que corresponden a B y C
+			letras[0]=(cont1[trans]!=1&&cont1[trans]!=4&&cont1[trans]!=10&&cont1[trans]!=11&&cont1[trans]!=14&&cont1[trans]!=16);
+			letras[1]=(cont1[trans]!=5&&cont1[trans]!=6&&cont1[trans]!=10&&cont1[trans]!=13&&cont1[trans]!=14&&cont1[trans]!=15&&cont1[trans]!=17);
+			letras[2]=(cont1[trans]!=2&&cont1[trans]!=10&&cont1[trans]!=13&&cont1[trans]!=14&&cont1[trans]!=15&&cont1[trans]!=17);
+			letras[3]=(cont1[trans]!=1&&cont1[trans]!=4&&cont1[trans]!=7&&cont1[trans]!=10&&cont1[trans]!=110&&cont1[trans]!=12&&cont1[trans]!=14&&cont1[trans]!=16&&cont1[trans]!=17);
+			letras[4]=(cont1[trans]==0||cont1[trans]==2||cont1[trans]==6||cont1[trans]==8||cont1[trans]==11||cont1[trans]==12||cont1[trans]==13||cont1[trans]==15||cont1[trans]==16||cont1[trans]==17);
+			letras[5]=(cont1[trans]!=1&&cont1[trans]!=2&&cont1[trans]!=3&&cont1[trans]!=7&&cont1[trans]!=10&&cont1[trans]!=14);
+			letras[6]=(cont1[trans]!=0&&cont1[trans]!=1&&cont1[trans]!=7&&cont1[trans]!=10&&cont1[trans]!=15&&cont1[trans]!=17);
+
+			if(letras[0]){
+				GPIOE->ODR |= (1<<5);
+			}else{
+				GPIOE->ODR &= (~(1<<5));
+			}
+			if(letras[1]){
+				GPIOE->ODR |= (1<<4);
+			}else{
+				GPIOE->ODR &= (~(1<<4));
+			}
+			if(letras[2]){
+				GPIOF->ODR |= (1<<7);
+			}else{
+				GPIOF->ODR &= (~(1<<7));
+			}
+			if(letras[3]){
+				GPIOE->ODR |= (1<<3);
+			}else{
+				GPIOE->ODR &= (~(1<<3));
+			}
+			if(letras[4]){
+				GPIOE->ODR |= (1<<6);
+			}else{
+				GPIOE->ODR &= (~(1<<6));
+			}
+			if(letras[5]){
+				GPIOE->ODR |= (1<<2);
+			}else{
+				GPIOE->ODR &= (~(1<<2));
+			}
+			if(letras[6]){
+				GPIOF->ODR |= (1<<9);
+			}else{
+				GPIOF->ODR &= (~(1<<9));
+			}
+
+			GPIOD->ODR |= (1<<(6-trans));//Enciende el GPIO necesario para que se refresque el digito necesario
+			if(trans==0){//Si el digito en cuestion es el primero y se quiere representar un numero, se encendera el segmento que corresponde al punto decimal
+				GPIOD->ODR &= ~(1<<3);
+				if(cont1[0]<10)
+					GPIOF->ODR |= (1<<8);
+			}else{
+				GPIOF->ODR &= ~(1<<8);
+				GPIOD->ODR &= ~(1<<6-trans+1);
+			}
+			trans++;//Cambia la variable trans para que en la siguiente interrupcion, el digito a refrescar sea el siguiente
+			if (trans==4)//Como los digitos van de 0 a 3, al llegar a 4 se reinicia la variable trans
+				trans=0;
+
+		TIM6->SR &= ~1;//Se desactiva el flag de interrupcion para que no se realice una al volver al main
+	}
+}
+
+
+//Las siguientes funciones ponen en el visualizador distintos valores
+void put_ready(){//REDY
+	cont1[0]=12;
+	cont1[1]=13;
+	cont1[2]=0;
+	cont1[3]=4;
+}
+void put_cheat(){//CHET
+	cont1[0]=15;
+	cont1[1]=16;
+	cont1[2]=13;
+	cont1[3]=7;
+}
+void put_off(){//Apaga el visualizador
+	cont1[0]=10;
+	cont1[1]=10;
+	cont1[2]=10;
+	cont1[3]=10;
+}
+void put_slow(){//----
+	cont1[0]=14;
+	cont1[1]=14;
+	cont1[2]=14;
+	cont1[3]=14;
+}
+
+
+
+int main(void)
+{
+
+	HAL_Init();
+	SystemClock_Config();
+	GPIO_Config();//Llama la funcion que configura los GPIOs
+	NVIC_EnableIRQ(TIM6_DAC_IRQn);//Habilita las interrupciones del TIM6 para que puedan realizarse
+	tim6_setup();//Llama la funcion que configura el tim6
+	int random_time=0;
+	int game_time=0;
+
+
+
+
+	while (1)
+	{
+
+		beggin://label para que se vuelva cada vez que se presiona clear
+		GPIOD->ODR &= ~(1<<7);
+		put_ready();//Pone REDY en el visualizador
+		srand(HAL_GetTick());//Funcion srand para que el tiempo aleatorio siempre sea distinto
+		while(!button_start()){///Espera a que el boton start sea presionado
+
+		}
+
+		if(button_start()){//Al presionar el boton start, inicia el programa
+			put_off();//Se apagan las pantallas del visualizador
+			while(random_time>3000||random_time<1000)//Se realiza este while hasta que el tiempo aleatorio este entre 1000-3000
+				random_time=rand()%3000;
+			int time=HAL_GetTick();
+			while(HAL_GetTick()<time+random_time){//Cuando el tiempo actual sobrepasa el tiempo inicial + el tiempo aleatorio anterior, se enciende el led
+				if(button_clear())//Si antes de que pase se presiona Clear, se va al inicio
+					goto beggin;
+				if(button_stop())//Si se presiona stop antes de encender el led, se va a la seccion de trampa
+					goto cheat;
+			}
+			GPIOD->ODR |= 1<<7;//Enciende el led de estimulo
+			game_time=HAL_GetTick();//Se toma el tiempo en el que se encendio el led
+			if(button_clear())
+				goto beggin;
+		}
+		while(HAL_GetTick()<game_time+2000){//Espera 2 segundos como ventana de tiempo donde se puede presionar el boton stop
+			if(button_clear())//
+				goto beggin;
+			if(button_stop()){//Si se presiona stop, se apaga el led y se muestra en el visualizador el tiempo que se tardo desde que se encendio hasta que se presiono stop
+				GPIOD->ODR &= ~(1<<7);
+				int help = HAL_GetTick();
+				game_time=help-game_time;
+				int i=0;
+				while(i<4){//Se pone en cada posicion del arreglo cont1 uno de los digitos que se corresponderan al visualizador mediante el metodo de modulo y division
+					cont1[3-i]=game_time%10;game_time/=10;
+					i++;
+				}
+				if(button_clear())
+					goto beggin;
+			}
+
+		}
+		if(game_time>0){//Si el valor de game_time es > 0, significa que el boton no se presiono antes de 2 segundos
+						//Por lo que se apaga el led y se pone en el visualizador ----
+			GPIOD->ODR &= ~(1<<7);
+			put_slow();
+		}
+		while(!button_clear()){//Mantiene en el visualizador ---- hasta que se presione el boton clear. Al presionarlo se va al inicio
+
+		}if(button_clear())
+			goto beggin;
+
+
+		cheat://Label al que se va si se presiona stop antes de que encienda el led
+		put_cheat();//Se pone en el visualizador CHET
+		while(!button_clear()){//Hace que el led parpadee hasta que se presione clear
+			if(!(GPIOD->ODR & (1<<7))){
+				GPIOD->ODR |= (1<<7);
+			}else{
+				GPIOD->ODR &= ~(1<<7);
+			}
+			HAL_Delay(100);
+		}
+
+	}
+
+}
+
+
+void SystemClock_Config(void)
+{
+	RCC_OscInitTypeDef RCC_OscInitStruct = {0};
+	RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
+
+	/** Configure the main internal regulator output voltage
+	 */
+	__HAL_RCC_PWR_CLK_ENABLE();
+	__HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
+	/** Initializes the CPU, AHB and APB busses clocks
+	 */
+	RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
+	RCC_OscInitStruct.HSIState = RCC_HSI_ON;
+	RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
+	RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
+	RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
+	RCC_OscInitStruct.PLL.PLLM = 8;
+	RCC_OscInitStruct.PLL.PLLN = 216;
+	RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
+	RCC_OscInitStruct.PLL.PLLQ = 2;
+	if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
+	{
+		Error_Handler();
+	}
+	/** Activate the Over-Drive mode
+	 */
+	if (HAL_PWREx_EnableOverDrive() != HAL_OK)
+	{
+		Error_Handler();
+	}
+	/** Initializes the CPU, AHB and APB busses clocks
+	 */
+	RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
+			|RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
+	RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
+	RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
+	RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV4;
+	RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV2;
+
+	if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_7) != HAL_OK)
+	{
+		Error_Handler();
+	}
+}
+
+/* USER CODE BEGIN 4 */
+
+/* USER CODE END 4 */
+
+/**
+ * @brief  This function is executed in case of error occurrence.
+ * @retval None
+ */
+void Error_Handler(void)
+{
+	/* USER CODE BEGIN Error_Handler_Debug */
+	/* User can add his own implementation to report the HAL error return state */
+
+	/* USER CODE END Error_Handler_Debug */
+}
+
+#ifdef  USE_FULL_ASSERT
+/**
+ * @brief  Reports the name of the source file and the source line number
+ *         where the assert_param error has occurred.
+ * @param  file: pointer to the source file name
+ * @param  line: assert_param error line source number
+ * @retval None
+ */
+void assert_failed(uint8_t *file, uint32_t line)
+{ 
+	/* USER CODE BEGIN 6 */
+	/* User can add his own implementation to report the file name and line number,
+     tex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
+	/* USER CODE END 6 */
+}
+#endif /* USE_FULL_ASSERT */
+
+/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
