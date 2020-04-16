@@ -1,0 +1,518 @@
+/* USER CODE BEGIN Header */
+/**
+ ******************************************************************************
+ * @file           : main.c
+ * @brief          : Main program body
+ ******************************************************************************
+ * @attention
+ *
+ * <h2><center>&copy; Copyright (c) 2020 STMicroelectronics.
+ * All rights reserved.</center></h2>
+ *
+ * This software component is licensed by ST under BSD 3-Clause license,
+ * the "License"; You may not use this file except in compliance with the
+ * License. You may obtain a copy of the License at:
+ *                        opensource.org/licenses/BSD-3-Clause
+ *
+ ******************************************************************************
+ */
+/* USER CODE END Header */
+
+/* Includes ------------------------------------------------------------------*/
+#include "main.h"
+
+/* Private includes ----------------------------------------------------------*/
+/* USER CODE BEGIN Includes */
+
+/* USER CODE END Includes */
+
+/* Private typedef -----------------------------------------------------------*/
+/* USER CODE BEGIN PTD */
+
+/* USER CODE END PTD */
+
+/* Private define ------------------------------------------------------------*/
+/* USER CODE BEGIN PD */
+/* USER CODE END PD */
+
+/* Private macro -------------------------------------------------------------*/
+/* USER CODE BEGIN PM */
+void GPIO_Config(){//Configuracion de todos los GPIOs necesarios para la practica
+	RCC->AHB1ENR |= ((1<<0) | (1<<1) | (1<<2) | (1<<3) | (1<<4) | (1<<5) | (1<<6));
+	//Modo de los GPIO, salida
+	//LEDs del Micro
+	GPIOB->MODER |= (1<<0);
+	GPIOB->MODER &= (~(1<<1));
+	GPIOB->MODER |= (1<<14);
+	GPIOB->MODER &= (~(1<<15));
+	GPIOB->MODER |= (1<<28);
+	GPIOB->MODER &= (~(1<<29));
+
+	//Tipo, PushPull
+	GPIOB->OTYPER &= (~(1<<0));
+	GPIOB->OTYPER &= (~(1<<7));
+	GPIOB->OTYPER &= (~(1<<14));
+
+	//Velocidad, lenta
+	GPIOB->OSPEEDR &= (~(3<<0));
+	GPIOB->OSPEEDR &= (~(3<<7));
+	GPIOB->OSPEEDR &= (~(3<<14));
+
+	//boton
+	GPIOC->MODER &= (1<<26);
+	GPIOC->MODER &= (~(1<<27));
+	GPIOC->OSPEEDR &= (~(3<<13));
+	GPIOC->PUPDR &= (~(3<<13));
+	GPIOC->PUPDR |= ((2<<13));
+
+	//LEDs del Vumetro
+	//Modo Salida
+	GPIOB->MODER |= (1<<16);//PB8
+	GPIOB->MODER &= (~(1<<17));
+
+	GPIOB->MODER |= (1<<18);//PB9
+	GPIOB->MODER &= (~(1<<19));
+
+	GPIOA->MODER |= (1<<10);//PA5
+	GPIOA->MODER &= (~(1<<11));
+
+	GPIOA->MODER |= (1<<12);//PA6
+	GPIOA->MODER &= (~(1<<13));
+
+	GPIOD->MODER |= (1<<28);//PD14
+	GPIOD->MODER &= (~(1<<29));
+
+	GPIOF->MODER |= (1<<24);//PF12
+	GPIOF->MODER &= (~(1<<25));
+
+	GPIOE->MODER |= (1<<18);//PE9
+	GPIOE->MODER &= (~(1<<19));
+
+	GPIOF->MODER |= (1<<28);//PF14
+	GPIOF->MODER &= (~(1<<29));
+
+	GPIOF->MODER |= (1<<30);//PF15
+	GPIOF->MODER &= (~(1<<31));
+
+	GPIOG->MODER |= (1<<18);//PG9
+	GPIOG->MODER &= (~(1<<19));
+
+	GPIOE->MODER |= (1<<14);//PE7
+	GPIOE->MODER &= (~(1<<15));
+
+	GPIOE->MODER |= (1<<20);//PE10
+	GPIOE->MODER &= (~(1<<21));
+
+	GPIOE->MODER |= (1<<28);//PE14
+	GPIOE->MODER &= (~(1<<29));
+
+	GPIOB->MODER |= (1<<20);//PB10
+	GPIOB->MODER &= (~(1<<21));
+
+	//Tipo de salida Push-Pull
+	GPIOB->OTYPER &= (~(1<<8));
+	GPIOB->OTYPER &= (~(1<<9));
+	GPIOA->OTYPER &= (~(1<<5));
+	GPIOA->OTYPER &= (~(1<<6));
+	GPIOD->OTYPER &= (~(1<<14));
+	GPIOF->OTYPER &= (~(1<<12));
+	GPIOE->OTYPER &= (~(1<<9));
+	GPIOF->OTYPER &= (~(1<<14));
+	GPIOF->OTYPER &= (~(1<<15));
+	GPIOG->OTYPER &= (~(1<<9));
+	GPIOE->OTYPER &= (~(1<<7));
+	GPIOE->OTYPER &= (~(1<<10));
+	GPIOE->OTYPER &= (~(1<<14));
+	GPIOB->OTYPER &= (~(1<<10));
+
+	//Velocidad Lenta
+	GPIOB->OSPEEDR &= (~(3<<8));
+	GPIOB->OSPEEDR &= (~(3<<9));
+	GPIOA->OSPEEDR &= (~(3<<5));
+	GPIOA->OSPEEDR &= (~(3<<6));
+	GPIOD->OSPEEDR &= (~(3<<14));
+	GPIOF->OSPEEDR &= (~(3<<12));
+	GPIOE->OSPEEDR &= (~(3<<9));
+	GPIOF->OSPEEDR &= (~(3<<14));
+	GPIOF->OSPEEDR &= (~(3<<15));
+	GPIOG->OSPEEDR &= (~(3<<9));
+	GPIOE->OSPEEDR &= (~(3<<7));
+	GPIOE->OSPEEDR &= (~(3<<10));
+	GPIOE->OSPEEDR &= (~(3<<14));
+	GPIOB->OSPEEDR &= (~(3<<10));
+}
+/*float buffer[105];
+float buffer_input[105];
+float buffer_output[105];
+
+
+float impulse_FIR[]={-0,-3.7673e-06,2.4866e-05,-5.7045e-05,6.3891e-05,-7.6316e-19,-0.0001493,0.00033502,-0.00044578,0.00035519,-2.9779e-18,-0.00055047,0.0010796,-0.0012905,0.00094218,-6.4275e-18,-0.0012771,0.0023771,-0.0027162,0.0019068,-1.0774e-17,-0.0024236,0.0043929,-0.0049035,0.0033721,-1.5593e-17,-0.0041426,0.0074059,-0.0081695,0.0055625,-2.0411e-17,-0.0067361,0.01199,-0.013193,0.0089797,-2.4758e-17,-0.010941,0.019614,-0.021809,0.015057,-2.8207e-17,-0.019171,0.035501,-0.041189,0.030088,-3.0422e-17,-0.04604,0.10002,-0.15077,0.18691,0.8,0.18691,-0.15077,0.10002,-0.04604,-3.0422e-17,0.030088,-0.041189,0.035501,-0.019171,-2.8207e-17,0.015057,-0.021809,0.019614,-0.010941,-2.4758e-17,0.0089797,-0.013193,0.01199,-0.0067361,-2.0411e-17,0.0055625,-0.0081695,0.0074059,-0.0041426,-1.5593e-17,0.0033721,-0.0049035,0.0043929,-0.0024236,-1.0774e-17,0.0019068,-0.0027162,0.0023771,-0.0012771,-6.4275e-18,0.00094218,-0.0012905,0.0010796,-0.00055047,-2.9779e-18,0.00035519,-0.00044578,0.00033502,-0.0001493,-7.6316e-19,6.3891e-05,-5.7045e-05,2.4866e-05,-3.7673e-06,-0
+};
+double impulse_IIR_in[]={1,59.999,1787.3,35243,5.1738e+05,6.0311e+06,5.8142e+07,4.767e+08,3.3928e+09,2.1291e+10,1.1926e+11,6.0219e+11,2.7635e+12,1.1604e+13,4.4845e+13,1.6029e+14,5.3217e+14,1.6473e+15,4.7696e+15,1.2956e+16,3.3103e+16,7.9737e+16,1.8145e+17,3.9083e+17,7.9815e+17,1.5478e+18,2.8542e+18,5.0113e+18,8.3872e+18,1.3395e+19,2.0435e+19,2.9803e+19,4.1589e+19,5.5571e+19,7.1148e+19,8.7336e+19,1.0284e+20,1.1624e+20,1.2616e+20,1.3153e+20,1.3179e+20,1.2695e+20,1.1759e+20,1.0477e+20,8.9812e+19,7.4085e+19,5.8816e+19,4.4945e+19,3.3063e+19,2.3415e+19,1.5964e+19,1.0479e+19,6.6216e+18,4.0279e+18,2.3584e+18,1.3291e+18,7.2071e+17,3.7601e+17,1.887e+17,9.1063e+16,4.2248e+16,1.8837e+16,8.0685e+15,3.3188e+15,1.3103e+15,4.9631e+14,1.8025e+14,6.2734e+13,2.0909e+13,6.669e+12,2.034e+12,5.9267e+11,1.6485e+11,4.3721e+10,1.1045e+10,2.6547e+09,6.0622e+08,1.3134e+08,2.6956e+07,5.2313e+06,9.5819e+05,1.6529e+05,26791,4069.4,577.51,76.324,9.3578,1.0598,0.11032,0.010493,0.0009058,7.0384e-05,4.8743e-06,2.9717e-07,1.5702e-08,7.0444e-10,2.6091e-11,7.6599e-13,1.6712e-14,2.4089e-16,1.7207e-18
+};
+double impulse_IIR_out[]={1,59.999,1787.3,35243,5.1738e+05,6.0311e+06,5.8142e+07,4.767e+08,3.3928e+09,2.1291e+10,1.1926e+11,6.0219e+11,2.7635e+12,1.1604e+13,4.4845e+13,1.6029e+14,5.3217e+14,1.6473e+15,4.7696e+15,1.2956e+16,3.3103e+16,7.9737e+16,1.8145e+17,3.9083e+17,7.9815e+17,1.5478e+18,2.8542e+18,5.0113e+18,8.3872e+18,1.3395e+19,2.0435e+19,2.9803e+19,4.1589e+19,5.5571e+19,7.1148e+19,8.7336e+19,1.0284e+20,1.1624e+20,1.2616e+20,1.3153e+20,1.3179e+20,1.2695e+20,1.1759e+20,1.0477e+20,8.9812e+19,7.4085e+19,5.8816e+19,4.4945e+19,3.3063e+19,2.3415e+19,1.5964e+19,1.0479e+19,6.6216e+18,4.0279e+18,2.3584e+18,1.3291e+18,7.2071e+17,3.7601e+17,1.887e+17,9.1063e+16,4.2248e+16,1.8837e+16,8.0685e+15,3.3188e+15,1.3103e+15,4.9631e+14,1.8025e+14,6.2734e+13,2.0909e+13,6.669e+12,2.034e+12,5.9267e+11,1.6485e+11,4.3721e+10,1.1045e+10,2.6547e+09,6.0622e+08,1.3134e+08,2.6956e+07,5.2313e+06,9.5819e+05,1.6529e+05,26791,4069.4,577.51,76.324,9.3578,1.0598,0.11032,0.010493,0.0009058,7.0384e-05,4.8743e-06,2.9717e-07,1.5702e-08,7.0444e-10,2.6091e-11,7.6599e-13,1.6712e-14,2.4089e-16,1.7207e-18
+};*/
+float buffer_in[4]={0,0,0,0};//arreglo de los elementos de entrada
+float buffer_in100[100];
+float buffer_out[4]={0,0,0,0};//arreglo de los elementos de salida
+float FIR_impulse[4]={-0.0157,0.5157,0.5157,-0.0157}; //Coeficientes del impulso para filtro FIR
+float FIR_impulse100[]={-0,-3.7673e-06,2.4866e-05,-5.7045e-05,6.3891e-05,-7.6316e-19,-0.0001493,0.00033502,-0.00044578,0.00035519,-2.9779e-18,-0.00055047,0.0010796,-0.0012905,0.00094218,-6.4275e-18,-0.0012771,0.0023771,-0.0027162,0.0019068,-1.0774e-17,-0.0024236,0.0043929,-0.0049035,0.0033721,-1.5593e-17,-0.0041426,0.0074059,-0.0081695,0.0055625,-2.0411e-17,-0.0067361,0.01199,-0.013193,0.0089797,-2.4758e-17,-0.010941,0.019614,-0.021809,0.015057,-2.8207e-17,-0.019171,0.035501,-0.041189,0.030088,-3.0422e-17,-0.04604,0.10002,-0.15077,0.18691,0.8,0.18691,-0.15077,0.10002,-0.04604,-3.0422e-17,0.030088,-0.041189,0.035501,-0.019171,-2.8207e-17,0.015057,-0.021809,0.019614,-0.010941,-2.4758e-17,0.0089797,-0.013193,0.01199,-0.0067361,-2.0411e-17,0.0055625,-0.0081695,0.0074059,-0.0041426,-1.5593e-17,0.0033721,-0.0049035,0.0043929,-0.0024236,-1.0774e-17,0.0019068,-0.0027162,0.0023771,-0.0012771,-6.4275e-18,0.00094218,-0.0012905,0.0010796,-0.00055047,-2.9779e-18,0.00035519,-0.00044578,0.00033502,-0.0001493,-7.6316e-19,6.3891e-05,-5.7045e-05,2.4866e-05,-3.7673e-06,-0
+};
+float IIR_impulse_in[4]={4.583e-05,1.375E-03,1.375E-03,4.583e-05}; //Coeficientes del impulso en la entrada para filtro IIR
+float IIR_impulse_out[3]={0.979,-0.862,1.117}; //Coeficientes del impulso en la salida para filtro IIR
+int push_button_pressed(){//funcion para saber si el boton esta presionado, si no esta presionado, devuelve un 0. Si esta presionado, devuelve un 1.
+	int value=0;
+	if((GPIOC->IDR & (1<<13))!=0){
+		value=1;
+	}
+	return value;
+}
+float FIR_filter(int input){//Funcion para realizar el filtrado FIR de orden 3 de la señal
+	float output=0;
+	int i=0;
+	for (i = 3; i > 0; i--) {//se desplazan los elementos de la entrada
+		buffer_in[i]=buffer_in[i-1];
+	}
+	buffer_in[0]=input;//se pone en la primera posicion del arreglo de entrada la la mas reciente
+	for (i = 0; i < 4; i++) {//Se realiza el producto de la señal y la respuesta al impulso
+		output+=buffer_in[i]*FIR_impulse[i];
+	}
+	return output;
+}
+float FIR_filter_100(int input){//Funcion para realizar el filtrado FIR de orden 100 de la señal
+	float output=0;
+	int i=0;
+	for (i = 99; i > 0; i--) {//se desplazan los elementos de la entrada
+		buffer_in100[i]=buffer_in100[i-1];
+	}
+	buffer_in100[0]=input;//se pone en la primera posicion del arreglo de entrada la la mas reciente
+	for (i = 0; i < 100; i++) {//Se realiza el producto de la señal y la respuesta al impulso
+		output+=buffer_in100[i]*FIR_impulse100[i];
+	}
+	return output;
+}
+double IIR_filter(int input){//Funcion para realizar el filtrado IIR de la señal
+	double output=0;
+	int i=0;
+	for (i = 3; i > 0; i--) {//se desplazan los elementos de la entrada
+		buffer_in[i]=buffer_in[i-1];
+	}
+	buffer_in[0]=input*100;
+	for (i = 0; i < 4; i++) {//se realiza el producto de la entrada y sus coeficientes
+		output+=buffer_in[i]*IIR_impulse_in[i];
+	}
+	for (i = 2; i > 0; i--) {//se desplazan los elementos de la entrada
+		buffer_out[i]=buffer_out[i-1];
+	}
+	for (i = 0; i < 3; i++) {//se realiza el producto de la salida y sus coeficientes
+		output+=buffer_out[i+1]*IIR_impulse_out[i+1];
+	}
+	buffer_out[0]= output;
+	return output;
+}
+void changeFilter(int *signal){//Funcion para cambiar de filtro en secuencia: 0-No Filtro, 1-FIR, 2-IIR, 3-FIR orden 100
+	(*signal)+=1;
+	if (*signal>3){
+		*signal=0;
+	}//hace que el valor de la variable señal vaya de 0 a 3
+
+	switch (*signal) {//Enciende leds correspoondientes del micro en codigo binario para simbolizar en cual de los 4 estados se encuentra
+	case 0:
+		GPIOB->ODR &= (~(1<<0));
+		GPIOB->ODR &= (~(1<<7));
+		GPIOB->ODR &= (~(1<<14));
+		break;
+	case 1:
+		GPIOB->ODR |= (1<<0);
+		GPIOB->ODR &= (~(1<<7));
+		GPIOB->ODR &= (~(1<<14));
+		break;
+	case 2:
+		GPIOB->ODR &= (~(1<<0));
+		GPIOB->ODR |= (1<<7);
+		GPIOB->ODR &= (~(1<<14));
+		break;
+	case 3:
+		GPIOB->ODR |= (1<<0);
+		GPIOB->ODR |= (1<<7);
+		GPIOB->ODR &= (~(1<<14));
+		break;
+	}
+}
+
+/* USER CODE END PM */
+
+/* Private variables ---------------------------------------------------------*/
+ADC_HandleTypeDef hadc1;
+
+/* USER CODE BEGIN PV */
+
+/* USER CODE END PV */
+
+/* Private function prototypes -----------------------------------------------*/
+void SystemClock_Config(void);
+static void MX_GPIO_Init(void);
+static void MX_ADC1_Init(void);//Inicializa lo necesario para que el ADC funcione adecuadamente
+/* USER CODE BEGIN PFP */
+
+/* USER CODE END PFP */
+
+/* Private user code ---------------------------------------------------------*/
+/* USER CODE BEGIN 0 */
+
+/* USER CODE END 0 */
+
+/**
+ * @brief  The application entry point.
+ * @retval int
+ */
+int main(void)
+{
+
+	int raw=0;//Variable que representa la entrada directa del ADC
+	double data=0;//Variable que representa el valor luego de estar filtrado
+
+	HAL_Init();
+	SystemClock_Config();
+
+	MX_GPIO_Init();
+	MX_ADC1_Init();
+	GPIO_Config();
+
+	float space=4096/70;//Dependiendo de la ganancia del amplificador anterior, se modifica este valor para conocer que tan sensible es el ADC.
+
+	int led[14]={0,0,0,0,0,0,0,0,0,0,0,0,0,0};//Arreglo que representa los 14 leds a utilizar
+	int cont;
+	int signal=0;
+	int flag=0;
+	int iter;
+	for (iter = 0; iter < 100; iter++) {
+		buffer_in100[iter]=0;
+	}
+
+	while (1)
+	{
+		HAL_ADC_Start(&hadc1);//Inicia `el ADC
+		HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);//Inicia la espera para la conversion del ADC
+
+		switch (signal) {// Switch que utiliza la variable signal para saber que filtro utilizar
+		case 0://No filter
+			data = HAL_ADC_GetValue(&hadc1);
+			break;
+		case 1://FIR
+			raw = HAL_ADC_GetValue(&hadc1);
+			data = FIR_filter(raw);
+			break;
+		case 2://IIR
+			raw = HAL_ADC_GetValue(&hadc1);
+			data = IIR_filter(raw);
+			break;
+		case 3://FIR100
+			raw = HAL_ADC_GetValue(&hadc1);
+			data = FIR_filter_100(raw);
+			break;
+		}
+		if(push_button_pressed()&&!flag){//if que se utiliza para cambiar el tipo de filtro alterando el valor de signal
+			changeFilter(&signal);
+			flag=1;
+		}
+		if(!push_button_pressed()){
+			flag=0;
+		}
+		for (cont = 0; cont < 14; cont++) {//Buble utilizado para asignar unos y ceros al arreglo de leds en funcion del valor obtenido del ADC y el valor de la variable space
+			led[cont]=(data>((cont+1)*space));
+		}
+		//apaga todos los leds, se hace para que no se mantengan encendidos si el valor de data no es suficiente
+		GPIOB->ODR &= (~(1<<8));
+		GPIOB->ODR &= (~(1<<9));
+		GPIOA->ODR &= (~(1<<5));
+		GPIOA->ODR &= (~(1<<6));
+		GPIOD->ODR &= (~(1<<14));
+		GPIOF->ODR &= (~(1<<12));
+		GPIOE->ODR &= (~(1<<9));
+		GPIOF->ODR &= (~(1<<14));
+		GPIOF->ODR &= (~(1<<15));
+		GPIOG->ODR &= (~(1<<9));
+		GPIOE->ODR &= (~(1<<7));
+		GPIOE->ODR &= (~(1<<10));
+		GPIOE->ODR &= (~(1<<14));
+		GPIOB->ODR &= (~(1<<10));
+
+		//enciende los leds correspondientes a su posicion en el arreglo
+		GPIOB->ODR |= ((led[0]<<8));
+		GPIOB->ODR |= ((led[1]<<9));
+		GPIOA->ODR |= ((led[2]<<5));
+		GPIOA->ODR |= ((led[3]<<6));
+		GPIOD->ODR |= ((led[4]<<14));
+		GPIOF->ODR |= ((led[5]<<12));
+		GPIOE->ODR |= ((led[6]<<9));
+		GPIOF->ODR |= ((led[7]<<14));
+		GPIOF->ODR |= ((led[8]<<15));
+		GPIOG->ODR |= ((led[9]<<9));
+		GPIOE->ODR |= ((led[10]<<7));
+		GPIOE->ODR |= ((led[11]<<10));
+		GPIOE->ODR |= ((led[12]<<14));
+		GPIOB->ODR |= ((led[13]<<10));
+
+	}
+	/* USER CODE END 3 */
+}
+
+/**
+ * @brief System Clock Configuration
+ * @retval None
+ */
+void SystemClock_Config(void)
+{
+	RCC_OscInitTypeDef RCC_OscInitStruct = {0};
+	RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
+
+	/** Configure the main internal regulator output voltage
+	 */
+	__HAL_RCC_PWR_CLK_ENABLE();
+	__HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
+	/** Initializes the CPU, AHB and APB busses clocks
+	 */
+	RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
+	RCC_OscInitStruct.HSIState = RCC_HSI_ON;
+	RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
+	RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
+	RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
+	RCC_OscInitStruct.PLL.PLLM = 8;
+	RCC_OscInitStruct.PLL.PLLN = 216;
+	RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
+	RCC_OscInitStruct.PLL.PLLQ = 2;
+	if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
+	{
+		Error_Handler();
+	}
+	/** Activate the Over-Drive mode
+	 */
+	if (HAL_PWREx_EnableOverDrive() != HAL_OK)
+	{
+		Error_Handler();
+	}
+	/** Initializes the CPU, AHB and APB busses clocks
+	 */
+	RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
+			|RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
+	RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
+	RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
+	RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV4;
+	RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV2;
+
+	if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_7) != HAL_OK)
+	{
+		Error_Handler();
+	}
+}
+
+/**
+ * @brief ADC1 Initialization Function
+ * @param None
+ * @retval None
+ */
+static void MX_ADC1_Init(void)
+{
+
+	/* USER CODE BEGIN ADC1_Init 0 */
+
+	/* USER CODE END ADC1_Init 0 */
+
+	ADC_ChannelConfTypeDef sConfig = {0};
+
+	/* USER CODE BEGIN ADC1_Init 1 */
+
+	/* USER CODE END ADC1_Init 1 */
+	/** Configure the global features of the ADC (Clock, Resolution, Data Alignment and number of conversion)
+	 */
+	hadc1.Instance = ADC1;
+	hadc1.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV4;
+	hadc1.Init.Resolution = ADC_RESOLUTION_12B;
+	hadc1.Init.ScanConvMode = ADC_SCAN_DISABLE;
+	hadc1.Init.ContinuousConvMode = DISABLE;
+	hadc1.Init.DiscontinuousConvMode = DISABLE;
+	hadc1.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
+	hadc1.Init.ExternalTrigConv = ADC_SOFTWARE_START;
+	hadc1.Init.DataAlign = ADC_DATAALIGN_RIGHT;
+	hadc1.Init.NbrOfConversion = 1;
+	hadc1.Init.DMAContinuousRequests = DISABLE;
+	hadc1.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
+	if (HAL_ADC_Init(&hadc1) != HAL_OK)
+	{
+		Error_Handler();
+	}
+	/** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
+	 */
+	sConfig.Channel = ADC_CHANNEL_3;
+	sConfig.Rank = ADC_REGULAR_RANK_1;
+	sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
+	if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+	{
+		Error_Handler();
+	}
+	/* USER CODE BEGIN ADC1_Init 2 */
+
+	/* USER CODE END ADC1_Init 2 */
+
+}
+
+/**
+ * @brief GPIO Initialization Function
+ * @param None
+ * @retval None
+ */
+static void MX_GPIO_Init(void)
+{
+	GPIO_InitTypeDef GPIO_InitStruct = {0};
+
+	/* GPIO Ports Clock Enable */
+	__HAL_RCC_GPIOA_CLK_ENABLE();
+	__HAL_RCC_GPIOG_CLK_ENABLE();
+
+	/*Configure GPIO pin Output Level */
+	HAL_GPIO_WritePin(GPIOG, GPIO_PIN_1, GPIO_PIN_RESET);
+
+	/*Configure GPIO pin : PG1 */
+	GPIO_InitStruct.Pin = GPIO_PIN_1;
+	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+	GPIO_InitStruct.Pull = GPIO_NOPULL;
+	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+	HAL_GPIO_Init(GPIOG, &GPIO_InitStruct);
+
+}
+
+/* USER CODE BEGIN 4 */
+
+/* USER CODE END 4 */
+
+/**
+ * @brief  This function is executed in case of error occurrence.
+ * @retval None
+ */
+void Error_Handler(void)
+{
+	/* USER CODE BEGIN Error_Handler_Debug */
+	/* User can add his own implementation to report the HAL error return state */
+
+	/* USER CODE END Error_Handler_Debug */
+}
+
+#ifdef  USE_FULL_ASSERT
+/**
+ * @brief  Reports the name of the source file and the source line number
+ *         where the assert_param error has occurred.
+ * @param  file: pointer to the source file name
+ * @param  line: assert_param error line source number
+ * @retval None
+ */
+void assert_failed(uint8_t *file, uint32_t line)
+{ 
+	/* USER CODE BEGIN 6 */
+	/* User can add his own implementation to report the file name and line number,
+     tex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
+	/* USER CODE END 6 */
+}
+#endif /* USE_FULL_ASSERT */
+
+/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
